@@ -1,0 +1,84 @@
+
+Multi-Paxos
+
+CAP:
+C consistency 
+A availability 
+P Partition tolerance
+cap有这么重要么？
+
+liveness :
+1.肯定会有提议被接受
+2.被接受的提议肯定可以被其他进程学习到
+safety:
+只有一个值被确定或者批准，不能出现第二个值把第一个值覆盖的情况
+ 平衡
+
+以前模拟过类似?
+
+
+Paxos 算法在正式提案之前会有一个询问的过程
+
+在询问阶段 各个Processor向Acceptor告知提交的epoch,Acceptor只接受最大的Epoch 并记录下来，这样在提交阶段，如果processor的Epoch小于自己的epoch则拒绝这次提案
+
+两个承诺，一个应答
+
+
+
+询问阶段（Propose阶段）
+
+
+Proposal ID 时间序列
+
+
+Proposer 发送 Propose
+
+       Proposer 生成全局唯一且递增的Proposal ID,向集群的所有机器发送 Propose,这里无 
+                        //Proposal ID 的作用 提案的先后时间
+       需携带提案内容,只携带Proposal ID即可
+
+Acceptor 应答 Propose
+       Acceptor 收到Propose后,做出“两个承诺,一个应答”
+
+       两个承诺
+          第一,不再应答 Proposal ID 小于等于(注意:这里是 <= )当前请求的 Propose ?第二,不再应答 Proposal ID 小于(注意:这里是 < )当前请求的 Accept请求
+                                        //为什么是小于等于？防重发？ 时间失效策略 为什么拒绝Propose 不认别人学习啊？？不会出现一只propose 拒绝的情况么？试试。。
+                            //请求的不重复承诺。。
+                                                //Accept 请求？ 
+        一个应答
+          返回已经 Accept 过的提案中 Proposal ID 最大的那个提案的Value和accepted
+                                        //Accept 过？
+          Proposal ID,没有则返回空值
+                                        //哪个
+
+//算法中时间所占的位置（协同算法。。。）
+
+接收阶段（Accept 阶段）
+//accept阶段不生成ID？
+Proposer 发送 Accept
+   “提案生成规则”:Proposer 收集到多数派的Propose应答后,从应答中选择存在提案  // 这里的多数派是大数派？
+
+   Value的并且同时也是Proposal ID最大的提案的Value,作为本次要发起 Accept 的提案。 如果所有应答的提案Value均为空值,则可以自己随意决定提案Value。然后携带上当前 Proposal ID,向集群的所有机器发送 Accept请      求
+
+应答 Accept
+    Acceptor 收到 Accpet 请求后,检查不违背自己之前作出的“两个承诺”情况下,持久
+        //accept  时的 规则 与自己相等 accept 更新id 与自己不等 更新 取消持久化，重启提议过程。。。。
+   化当前 Proposal ID 和提案Value。最后 Proposer 收集到多数派的Accept应答后,形成 决议
+//被大多数人通过的情况下形成决议,如果没有形成多数派则,持续提议.........
+
+//简单的，你只有通过的权利。。。。{提议过程中如何应答呢。。。。} 提议接收返回后  发现更改已经accept其他value=>重新提议？？。、？
+
+
+
+
+//集中通讯报文格式
+
+1 proposeid,value
+2 accept refuse
+
+
+
+
+
+
+
